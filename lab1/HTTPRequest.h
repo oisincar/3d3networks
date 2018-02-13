@@ -4,14 +4,17 @@
 #include <vector>
 using namespace std;
 
-class HTTPRequest{
+class HTTPRequest {
  private:
-  string _message;
   string _URL;
   string _path;
 
  public:
-  HTTPRequest(string path, string url, string msg);
+  HTTPRequest(string url, string msg);
+  HTTPRequest(vector<uint8_t> ss);
+
+  string getUrl() { return _URL; }
+  string getPath() { return _path; }
+
   vector<uint8_t> encode();
-  HTTPRequest consume(vector<uint8_t> ss);
 };

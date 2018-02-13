@@ -2,7 +2,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <string.h>
+#include <string>
 #include <stdio.h>
 #include <errno.h>
 #include <unistd.h>
@@ -16,15 +16,41 @@
 
 vector<u_int8_t> getMessage(int sockfd);
 
-int main()
+int main(int argc, char **argv)
 {
+  if (argc != 2) {
+    std::cout << "Please enter url to request." << endl
+              << "Usage: ./web-client [URL:PORT/FILENAME]" << endl;
+    return 0;
+  }
+
+  std::string url(argv[1]);
+
+  // Parse arguments.
+
+  // Up until : is the host.
+  size_t colonIx = url.find(':');
+  std::string host = url.substr(0, colonIx);
+
+  // From : to '/' (if there is one) is the portno.
+  size_t slashIx = url.find('/', colonIx);
+  std::string port = url.substr(colonIx+1, slashIx - colonIx-1);
+  int portno = stoi(port);
+
+  std::string file = "index.html";
+  // If there is a slash/ it's not the last charachter.. Then we have a file.
+  if (slashIx != std::string::npos && slashIx+1 < url.length() )
+    file = url.substr(slashIx+1, url.length()-slashIx-1);
+
+  cout << "Host: " << host << " Port: " << portno << " File: " << file << endl;
+
+
+
   // Setup sockets..
-  int portno = 80;
-  std::string host = "www.example.com";
-  std::string path = "/index.html";
-
-  HTTPRequest r(path, host, "");
-
+  // int portno = 40000;
+  // std::string host = "www.example.com";
+  // std::string host = "127.0.0.1";
+  // std::string host = "localhost";
 
   // create a socket using TCP IP
   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -50,6 +76,12 @@ int main()
   }
 
   // Send get request..
+
+  // std::string path = "/index.html";
+
+  HTTPRequest r(file, host);
+
+
   vector<uint8_t> enc = r.encode();
   send(sockfd, (char*)(&enc[0]), enc.size(),0);
 
