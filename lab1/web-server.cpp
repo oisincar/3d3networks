@@ -122,7 +122,7 @@ void handleRequest(int clientSockfd) {
       vector<uint8_t> vec(buf, buf + m_len);
       HTTPRequest request(vec);
       string file = readFile("." + request.getPath());
-
+      vector<uint8_t> vec_file(file.begin(), file.end());
       // If file reading failed..
       // HTTPResponse 404..
       // response = ...(...);
@@ -130,6 +130,13 @@ void handleRequest(int clientSockfd) {
       // else
       // successful response..
       // response = ...(...);
+      if(file == " "){
+        HTTPResponse response("404 Not Found", "", empty_vec);
+      }
+      else {
+        HTTPResponse response("200 OK",request.getPath(), vec_file);
+
+      }
 
       break;
     }
@@ -158,7 +165,11 @@ string readFile(string filename) {
   const char *s = filename.c_str();
 
   std::cout << "Getting request for file: " << s << std::endl;
+  std::ifstream infile(s);  const char *s = filename.c_str();
+
+  std::cout << "Getting request for file: " << s << std::endl;
   std::ifstream infile(s);
+
   if (!infile.good()) {
     cout << "Could not find file." << endl;
     return "";
