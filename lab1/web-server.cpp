@@ -13,13 +13,14 @@
 #include <stdint.h>
 
 #include <fstream>
-// #include <string>
-// #include <iostream>
+#include <thread>
 
 #include "HTTPRequest.h"
+#include "HTTPResponse.h"
 
 const int MsgLen = 1024;
 string readFile(string filename);
+void handleRequest(int clientSockfd);
 
 int main()
 {
@@ -52,44 +53,104 @@ int main()
     return 3;
   }
 
-  // accept a new connection
-  struct sockaddr_in clientAddr;
-  socklen_t clientAddrSize = sizeof(clientAddr);
-  int clientSockfd = accept(sockfd, (struct sockaddr*)&clientAddr, &clientAddrSize);
 
-  if (clientSockfd == -1) {
-    perror("accept");
-    return 4;
+  while (true) {
+    // accept a new connection
+    struct sockaddr_in clientAddr;
+    socklen_t clientAddrSize = sizeof(clientAddr);
+
+    int clientSockfd = accept(sockfd, (struct sockaddr*)&clientAddr, &clientAddrSize);
+
+    if (clientSockfd == -1) {
+      perror("accept");
+      return 4;
+    }
+
+    char ipstr[INET_ADDRSTRLEN] = {'\0'};
+    inet_ntop(clientAddr.sin_family, &clientAddr.sin_addr, ipstr, sizeof(ipstr));
+    std::cout << "Accept a connection from: " << ipstr << ":" <<
+        ntohs(clientAddr.sin_port) << std::endl;
+
+    // Create a new thread to handle request.
+    std::thread t = thread(handleRequest, clientSockfd);
+    t.detach();
   }
+}
 
-  char ipstr[INET_ADDRSTRLEN] = {'\0'};
-  inet_ntop(clientAddr.sin_family, &clientAddr.sin_addr, ipstr, sizeof(ipstr));
-  std::cout << "Accept a connection from: " << ipstr << ":" <<
-    ntohs(clientAddr.sin_port) << std::endl;
+void handleRequest(int clientSockfd) {
+  cout << "New thread spawned to handle requests on fd: " << clientSockfd << std::endl;
+  const int timeout = 3;
 
-  // read/write data from/into the connection
-  // bool isEnd = false;
+  // Set socket timeout:
+  struct timeval tv;
+  tv.tv_sec = timeout;
+  tv.tv_usec = 0;
+  setsockopt(clientSockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv, sizeof tv);
+
   char buf[MsgLen] = {0};
-  std::stringstream ss;
+  // std::stringstream ss;
+  string message = "";
+
+  // --------------------------HTTPRESPONSE FAIL HERE------------------------
+  vector<uint8_t> empty_vec;
+  HTTPResponse response("400 Bad Request", "", empty_vec);
 
   while(1) {
 
     int m_len = 0;
     if ((m_len = recv(clientSockfd, buf, MsgLen, 0)) == -1) {
       perror("recv");
-      return 5;
+      break;
+    }
+    if (m_len == 0) {
+      cout << "Client disconnected, or no message recieved within timeout period (" << timeout << "s)" << std::endl;
+      break;
     }
 
-    ss << buf << std::endl;
-    std::cout << buf << std::endl;
+    string buf_s(buf);
+    size_t endix = buf_s.find("\r\n");
 
+    // Append up to the occurence of endix.
+    message.append(buf_s, 0, endix);
 
-    vector<uint8_t> vec(buf, buf + m_len);
-    HTTPRequest request(vec);
+    // If there was a terminator, respond to the message.
+    if (endix != std::string::npos) {
 
+      std::cout << "Got full message: " << buf << std::endl;
 
-    string file = readFile("." + request.getPath());
+      // Convert to vector
+      vector<uint8_t> vec(buf, buf + m_len);
+      HTTPRequest request(vec);
+      string file = readFile("." + request.getPath());
+
+      // If file reading failed..
+      // HTTPResponse 404..
+      // response = ...(...);
+
+      // else
+      // successful response..
+      // response = ...(...);
+
+      break;
+    }
   }
+
+  // Send response, but split into submessages of a maximum length
+  // of MsgLen.
+  vector<uint8_t> resp = response.encode();
+  string resp_s(resp.begin(), resp.end());
+  cout << "Responding: " << resp_s << std::endl;
+  for (int i = 0; i < resp_s.length(); i += MsgLen) {
+
+    string substr = resp_s.substr(i, MsgLen);
+
+    if (send(clientSockfd, substr.c_str(), substr.length(), 0) == -1) {
+      break;
+    }
+  }
+
+  // Close thread..
+  cout << "Closing thread for fd: " << clientSockfd << std::endl;
 }
 
 string readFile(string filename) {

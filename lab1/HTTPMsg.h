@@ -4,6 +4,9 @@
 #include <vector>
 #include <map>
 
+#ifndef HTTPMSG_H
+#define HTTPMSG_H
+
 class HTTPMsg {
  private:
   std::string _path;
@@ -17,3 +20,5 @@ class HTTPMsg {
  public:
   virtual std::vector<uint8_t> encode();
 };
+
+#endif
