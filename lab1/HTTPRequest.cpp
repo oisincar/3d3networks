@@ -10,9 +10,6 @@
 
 // using namespace std;
 
-std::vector<std::string> splitLines(const std::string& s);
-std::vector<std::string> splitWords(const std::string& s);
-
 HTTPRequest::HTTPRequest (string path, string url) {
   _path = path;
   _URL = url;
@@ -42,45 +39,11 @@ HTTPRequest::HTTPRequest(vector<uint8_t> ss){
   string path = l1[1];
 
   // Parse all other parameters.
-  std::map<string, string> params;
-
-  for (int i = 1; i < (int)lines.size(); i++) {
-    vector<string> li = splitWords(lines[i]);
-
-    if (li.size() >= 2) {
-      params[li[0]] = li[1];
-    }
-  }
+  auto params = parseHeader(vector<string>(lines.begin()+1, lines.end()));
 
   _path = path;
   _URL = params["Host:"];
 
   cout << "path: " << path << endl;
   cout << "host: " << params["Host:"] << endl;
-}
-
-// Split string into lines.
-std::vector<std::string> splitLines(const std::string& s) {
-  std::vector<std::string> tokens;
-  std::string token;
-  std::istringstream tokenStream(s);
-  while (std::getline(tokenStream, token))
-  {
-    tokens.push_back(token);
-  }
-  return tokens;
-}
-
-// Split string into lines.
-std::vector<std::string> splitWords(const std::string& s) {
-  std::vector<std::string> tokens;
-  std::string token;
-  std::istringstream tokenStream(s);
-  while (std::getline(tokenStream, token, ' '))
-  {
-    tokens.push_back(token);
-  }
-  return tokens;
-
-
 }

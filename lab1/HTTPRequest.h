@@ -2,9 +2,10 @@
 #include <stdint.h>
 #include <string.h>
 #include <vector>
+#include "HTTPMsg.h"
 using namespace std;
 
-class HTTPRequest {
+class HTTPRequest : HTTPMsg {
  private:
   string _URL;
   string _path;

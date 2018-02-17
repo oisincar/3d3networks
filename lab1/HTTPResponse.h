@@ -4,6 +4,7 @@
 #include <vector>
 #include <chrono>
 #include <ctime>
+#include "HTTPMsg.h"
 
 using namespace std;
 
@@ -24,7 +25,7 @@ enum ResponseType {
    , Service_Unavailable
 };
 
-class HTTPResponse {
+class HTTPResponse : HTTPMsg {
  private:
   // ResponseType _statusCode;
   string _statusCode;
