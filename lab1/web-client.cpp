@@ -94,12 +94,15 @@ int main(int argc, char **argv)
 
 vector<u_int8_t> getMessage(int sockfd) {
   vector<uint8_t> result;
-  char buf[20];
+  const int MsgLen = 1024;
+  char buf[MsgLen];
   // CARE: WRONG. Needs to handle overlapping requests..
   // Also may not insert a 0 at the end correctly.
   int n;
-  while((n = recv(sockfd, buf, 20, 0)) > 0) {
+  while((n = recv(sockfd, buf, MsgLen, 0)) > 0) {
     result.insert(result.end(), buf, buf+n);
+
+    if (n != MsgLen) break;
   }
   return result;
 }

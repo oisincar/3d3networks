@@ -24,10 +24,13 @@ string HTTPResponse::getStatusCode(){
   return _statusCode;
 }
 
-void HTTPResponse:: setLocation(string location){
+void HTTPResponse::setLocation(string location){
   _location = location;
 }
 
+void HTTPResponse::setContent(vector<uint8_t> content) {
+  _content = content;
+}
 // std::string getCode(ResponseType type) {
 //   string ans;
 
@@ -52,16 +55,23 @@ void HTTPResponse:: setLocation(string location){
 // }
 
 vector<uint8_t> HTTPResponse:: encode(){
-  string header =
-      "HTTP/1.0 " + _statusCode + "\r\n" +
-      "Location: " + _location + "\r\n" +
-      "Date: " + "\r\n" +
-      "Server: gws" + "\r\n" +
-      "Content-Length: " + to_string(_content.size()) + "\r\n" +
-      "\r\n";
+  ostringstream header;
+
+  // std::time_t time_now = std::chrono::system_clock::to_time_t(_time);
+
+  header << "HTTP/1.0 " << _statusCode << "\r\n"
+         << "Location: " << _location << "\r\n"
+         // << "Date: " << std::ctime(&time_now) << "\r\n"
+         << "Server: gws" << "\r\n"
+         << "Content-Length: " << _content.size() << "\r\n"
+         << "\r\n";
 
   // Possibly doesn't end in 0?
-  vector<uint8_t> vec(header.begin(), header.end());
+  string s = header.str();
+
+  vector<uint8_t> vec(s.begin(), s.end());
+  vec.insert(vec.end(), _content.begin(), _content.end());
+  vec.push_back('\r'); vec.push_back('\n');
   return vec;
 }
 

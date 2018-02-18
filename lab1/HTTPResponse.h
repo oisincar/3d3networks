@@ -40,8 +40,9 @@ class HTTPResponse : HTTPMsg {
   HTTPResponse(vector<uint8_t> ss);
   vector<uint8_t> encode();
   HTTPResponse consume(vector<uint8_t> ss);
-   
+
   void setStatusCode(string statusCode);
   string getStatusCode();
   void setLocation(string location);
+  void setContent(vector<uint8_t> content);
 };

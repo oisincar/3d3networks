@@ -92,8 +92,8 @@ void handleRequest(int clientSockfd) {
   string message = "";
 
   // --------------------------HTTPRESPONSE FAIL HERE------------------------
-  vector<uint8_t>empty_vec;
-  HTTPResponse response("", "", empty_vec);
+  vector<uint8_t> empty_vec;
+  HTTPResponse response("400 Bad Request", "", empty_vec);
 
   while(1) {
 
@@ -123,19 +123,15 @@ void handleRequest(int clientSockfd) {
       HTTPRequest request(vec);
       string file = readFile("." + request.getPath());
 
-      // If file reading failed..
-      // HTTPResponse 404..
-      // response = ...(...);
-
-      // else
-      // successful response..
-      // response = ...(...);
-       if(file == " "){
+       if(file == "") {
          response.setStatusCode("404 Not Found");
        }
-       else{
+       else {
          response.setStatusCode("200 OK");
-         response.setLocation(request.getUrl()+request.getPath());
+         response.setLocation(request.getPath());
+
+         vector<uint8_t> content(file.begin(), file.end());
+         response.setContent(content);
        }
 
       break;
